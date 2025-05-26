@@ -75,7 +75,7 @@ CONFIG_PACKAGE_luci-app-qmodem=y
 CONFIG_PACKAGE_luci-app-qmodem-sms=y
 CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
 EOF
-
+}
 
 function set_nss_driver() {
   cat >> $1 <<EOF
@@ -99,6 +99,7 @@ CONFIG_PACKAGE_sqm-scripts-nss=y
 CONFIG_PACKAGE_kmod-qca-nss-crypto=y
 EOF
 }
+
 function kernel_version() {
   echo $(sed -n 's/^KERNEL_PATCHVER:=\(.*\)/\1/p' target/linux/qualcommax/Makefile)
 }
