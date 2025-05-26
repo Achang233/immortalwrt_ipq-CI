@@ -70,9 +70,6 @@ UPDATE_PACKAGE "luci-app-gecoosac" "lwb1978/openwrt-gecoosac" "main"
 
 #UPDATE_PACKAGE "lazyoop" "lazyoop/networking-artifact" "main"
 
-if [[ $WRT_REPO != *"immortalwrt"* ]]; then
-	UPDATE_PACKAGE "qmi-wwan" "immortalwrt/wwan-packages" "master" "pkg"
-fi
 
 #更新软件包版本
 UPDATE_VERSION() {
@@ -130,8 +127,6 @@ git clone -b 24.x https://github.com/sbwml/packages_lang_golang ../feeds/package
 
 cp -r $GITHUB_WORKSPACE/package/* ./
 
-#coremark修复
-sed -i 's/mkdir \$(PKG_BUILD_DIR)\/\$(ARCH)/mkdir -p \$(PKG_BUILD_DIR)\/\$(ARCH)/g' ../feeds/packages/utils/coremark/Makefile
 
 argon_css_file=$(find ./luci-theme-argon/ -type f -name "cascade.css")
 #修改字体

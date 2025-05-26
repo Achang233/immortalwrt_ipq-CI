@@ -68,22 +68,13 @@ CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
 CONFIG_PACKAGE_luci-proto-mbim=y
 CONFIG_PACKAGE_luci-proto-ncm=y
 CONFIG_PACKAGE_luci-proto-modemmanager=y
-EOF
-
-# 只有内核版本为6.6时才追加下面这些驱动配置
-if echo "$CI_NAME" | grep -q "6.6" > /dev/null; then
-  cat >> "$1" <<EOF
 CONFIG_PACKAGE_luci-app-qmodem=y
 CONFIG_PACKAGE_luci-app-qmodem-sms=y
 CONFIG_PACKAGE_luci-proto-qmi=y
 CONFIG_PACKAGE_luci-app-qmodem=y
 CONFIG_PACKAGE_luci-app-qmodem-sms=y
 CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan-fibocom=y
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan-quectel=y
 EOF
-fi
-}
 
 
 function set_nss_driver() {
