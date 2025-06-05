@@ -55,24 +55,21 @@ function cat_usb_net() {
   cat >> "$1" <<EOF
 #USB CPE Driver
 CONFIG_PACKAGE_kmod-usb-net=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-subset=y
-CONFIG_PACKAGE_kmod-usb-net-huawei-cdc-ncm=y
-CONFIG_PACKAGE_kmod-usb-net-ipheth=y
+#CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
+#CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
+#CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
 CONFIG_PACKAGE_kmod-usb-net-rndis=y
 CONFIG_PACKAGE_kmod-usb-net-rtl8150=y
 CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
-CONFIG_PACKAGE_luci-proto-mbim=y
-CONFIG_PACKAGE_luci-proto-ncm=y
-CONFIG_PACKAGE_luci-proto-modemmanager=y
-CONFIG_PACKAGE_luci-app-qmodem=y
-CONFIG_PACKAGE_luci-app-qmodem-sms=y
-CONFIG_PACKAGE_luci-proto-qmi=y
-CONFIG_PACKAGE_luci-app-qmodem=y
-CONFIG_PACKAGE_luci-app-qmodem-sms=y
-CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
+#CONFIG_PACKAGE_luci-proto-mbim=y
+#CONFIG_PACKAGE_luci-proto-ncm=y
+#CONFIG_PACKAGE_luci-proto-modemmanager=y
+#CONFIG_PACKAGE_luci-app-qmodem=y
+#CONFIG_PACKAGE_luci-app-qmodem-sms=y
+#CONFIG_PACKAGE_luci-proto-qmi=y
+#CONFIG_PACKAGE_luci-app-qmodem=y
+#CONFIG_PACKAGE_luci-app-qmodem-sms=y
+#CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
 EOF
 }
 
