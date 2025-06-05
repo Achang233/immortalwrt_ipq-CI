@@ -55,7 +55,6 @@ function cat_usb_net() {
   cat >> "$1" <<EOF
 #USB CPE Driver
 CONFIG_PACKAGE_kmod-usb-net=y
-CONFIG_PACKAGE_kmod-usb-net-cdc-eem=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
 CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
@@ -91,11 +90,9 @@ CONFIG_PACKAGE_kmod-qca-nss-drv-igs=y
 CONFIG_PACKAGE_kmod-qca-nss-drv-pppoe=y
 CONFIG_PACKAGE_kmod-qca-nss-drv-pptp=y
 CONFIG_PACKAGE_kmod-qca-nss-drv-qdisc=y
-CONFIG_PACKAGE_kmod-qca-nss-ecm=y
 CONFIG_PACKAGE_kmod-qca-nss-macsec=y
 CONFIG_PACKAGE_kmod-qca-nss-drv-l2tpv2=y
 CONFIG_PACKAGE_kmod-qca-nss-drv-lag-mgr=y
-CONFIG_PACKAGE_sqm-scripts-nss=y
 CONFIG_PACKAGE_kmod-qca-nss-crypto=y
 EOF
 }
