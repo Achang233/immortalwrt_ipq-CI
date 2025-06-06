@@ -166,7 +166,6 @@ jobs:
         
           generate_config && cat .config  
 
-          cd ./wrt/
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
           else
