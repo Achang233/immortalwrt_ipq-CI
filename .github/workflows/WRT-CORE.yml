@@ -32,7 +32,7 @@ on:
         required: true
         type: string
       WRT_SOURCE:
-        required: false
+        required: true
         type: string
       WRT_PACKAGE:
         required: false
@@ -40,12 +40,7 @@ on:
       WRT_TEST:
         required: false
         type: string
-      CI_NAME:
-        required: false
-        type: string
-      WRT_ARCH:
-        required: false
-        type: string
+
 env:
   GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
   WRT_CONFIG: ${{inputs.WRT_CONFIG}}
@@ -57,53 +52,23 @@ env:
   WRT_PW: ${{inputs.WRT_PW}}
   WRT_REPO: ${{inputs.WRT_REPO}}
   WRT_BRANCH: ${{inputs.WRT_BRANCH}}
+  WRT_SOURCE: ${{inputs.WRT_SOURCE}}
   WRT_PACKAGE: ${{inputs.WRT_PACKAGE}}
   WRT_TEST: ${{inputs.WRT_TEST}}
-  WRT_DIR: 'wrt'
-  CI_NAME: ${{inputs.CI_NAME}}
-  WRT_ARCH: ${{inputs.WRT_ARCH}}
 
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
     runs-on: ubuntu-latest
     steps:
-      - name: Install BC
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          sudo -E apt -yqq install bc
-
-      - name: Free Disk Space
-        uses: endersonmenezes/free-disk-space@v2
-        with:
-          remove_android: true
-          remove_dotnet: true
-          remove_haskell: true
-          remove_tool_cache: true
-          remove_swap: true
-          remove_packages: "azure-cli google-cloud-cli microsoft-edge-stable google-chrome-stable firefox postgresql* temurin-* *llvm* mysql* dotnet-sdk-*"
-          remove_packages_one_command: true
-          remove_folders: "/usr/share/swift /usr/share/miniconda /usr/share/az* /usr/share/glade* /usr/local/share/chromium /usr/local/share/powershell"
-          testing: false
-
-#      - name: Freeing up disk space
-#        uses: easimon/maximize-build-space@master
-#        with:
-#          root-reserve-mb: 10240
-#          swap-size-mb: 1024
-#          remove-dotnet: 'true'
-#          remove-android: 'true'
-#          remove-haskell: 'true'
-#          remove-codeql: 'true'
-#          remove-docker-images: 'true'
-
       - name: Checkout Projects
         uses: actions/checkout@main
+
       - name: Initialization Environment
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
+          sudo -E apt -yqq purge firefox
           sudo -E apt -yqq update
           sudo -E apt -yqq full-upgrade
           sudo -E apt -yqq autoremove --purge
@@ -113,31 +78,31 @@ jobs:
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
-#          sudo chown $USER:$GROUPS $GITHUB_WORKSPACE
-#          sudo mkdir -p /mnt/build_wrt
-#          sudo chown $USER:$USER /mnt/build_wrt
-#          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
+
+          sudo mkdir -p /mnt/build_wrt
+          sudo chown $USER:$USER /mnt/build_wrt
+          sudo ln -s /mnt/build_wrt $GITHUB_WORKSPACE/wrt
 
       - name: Initialization Values
         run: |
-          export WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d_%H.%M.%S")
-          export WRT_CI=$(basename $GITHUB_WORKSPACE)
-          export WRT_VER=$(echo $WRT_REPO | cut -d '/' -f 5-)-$WRT_BRANCH
-          export WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt | tr '[:lower:]' '[:upper:]')
-          [[ -z $WRT_ARCH ]] && {
-            export WRT_ARCH=$(sed -n 's/.*_DEVICE_\(.*\)_DEVICE_.*/\1/p' $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt | head -n 1)
-            echo "WRT_ARCH=$WRT_ARCH" >> $GITHUB_ENV
-          }
-          echo "WRT_DATE=$WRT_DATE" >> $GITHUB_ENV
-          echo "WRT_CI=$WRT_CI" >> $GITHUB_ENV
-          echo "WRT_VER=$WRT_VER" >> $GITHUB_ENV
-          echo "WRT_TARGET=$WRT_TARGET" >> $GITHUB_ENV
+          echo "WRT_DATE=$(TZ=UTC-8 date +"%y.%m.%d-%H.%M.%S")" >> $GITHUB_ENV
+          echo "WRT_MARK=${GITHUB_REPOSITORY%%/*}" >> $GITHUB_ENV
+          echo "WRT_INFO=${WRT_SOURCE%%/*}" >> $GITHUB_ENV
+          echo "WRT_TARGET=$(grep -m 1 -oP '^CONFIG_TARGET_\K[\w]+(?=\=y)' ./Config/$WRT_CONFIG.txt)" >> $GITHUB_ENV
+          echo "WRT_KVER=none" >> $GITHUB_ENV
+          echo "WRT_LIST=none" >> $GITHUB_ENV
 
       - name: Clone Code
         run: |
           git clone --depth=1 --single-branch --branch $WRT_BRANCH $WRT_REPO ./wrt/
 
           cd ./wrt/ && echo "WRT_HASH=$(git log -1 --pretty=format:'%h')" >> $GITHUB_ENV
+
+          # GitHub Action 移除国内下载源
+          PROJECT_MIRRORS_FILE="./scripts/projectsmirrors.json"
+          if [ -f "$PROJECT_MIRRORS_FILE" ]; then
+            sed -i '/.cn\//d; /tencent/d; /aliyun/d' "$PROJECT_MIRRORS_FILE"
+          fi
 
       - name: Check Scripts
         run: |
@@ -148,31 +113,41 @@ jobs:
         if: env.WRT_TEST != 'true'
         uses: actions/cache@main
         with:
-          key: ${{ env.WRT_ARCH }}-${{env.WRT_VER}}-${{env.WRT_HASH}}
-          restore-keys: |
-            ${{ env.WRT_ARCH }}-${{env.WRT_VER}}
-            ${{ env.WRT_ARCH }}
+          key: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_HASH}}
+          restore-keys: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}
           path: |
             ./wrt/.ccache
             ./wrt/staging_dir/host*
             ./wrt/staging_dir/tool*
 
-      - if: ${{ steps.check-cache.outputs.cache-hit != '' }}
-        name: Hit Caches
-        continue-on-error: true
+      - name: Update Caches
+        if: env.WRT_TEST != 'true'
         run: |
-          find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
+          if [ -d "./wrt/staging_dir" ]; then
+            find "./wrt/staging_dir" -type d -name "stamp" -not -path "*target*" | while read -r DIR; do
               find "$DIR" -type f -exec touch {} +
-          done
+            done
 
-          mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
-          echo "toolchain skiped done!"
+            mkdir -p ./wrt/tmp && echo "1" > ./wrt/tmp/.build
+
+            echo "toolchain skiped done!"
+          else
+            echo "caches missed!"
+          fi
+
+          if ${{steps.check-cache.outputs.cache-hit != 'true'}}; then
+            CACHE_LIST=$(gh cache list --key "$WRT_CONFIG-$WRT_INFO" | cut -f 1)
+            for CACHE_KEY in $CACHE_LIST; do
+              gh cache delete $CACHE_KEY
+            done
+
+            echo "caches cleanup done!"
+          fi
 
       - name: Update Feeds
         run: |
           cd ./wrt/
-          echo >> feeds.conf.default
-          echo 'src-git qmodem https://github.com/FUjr/QModem.git;main' >> feeds.conf.default
+
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
@@ -185,14 +160,22 @@ jobs:
 
       - name: Custom Settings
         run: |
+
           . $GITHUB_WORKSPACE/Scripts/function.sh
           cd ./wrt/
-          
-          generate_config && cat .config
-          
+        
+          generate_config && cat .config  
+
+          cd ./wrt/
+          if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
+            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
+          else
+            cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt $GITHUB_WORKSPACE/Config/GENERAL.txt >> .config
+          fi
+
           $GITHUB_WORKSPACE/Scripts/Settings.sh
 
-          make defconfig -j$(nproc)
+          make defconfig -j$(nproc) && make clean -j$(nproc)
 
       - name: Download Packages
         if: env.WRT_TEST != 'true'
@@ -206,7 +189,7 @@ jobs:
         run: |
           cd ./wrt/
 
-          make -j$(nproc) || make -j1 V=s
+          make -j$(nproc) || make -j$(nproc) V=s
 
       - name: Machine Information
         run: |
@@ -224,33 +207,30 @@ jobs:
         run: |
           cd ./wrt/ && mkdir ./upload/
 
-          cp -f ./.config ./upload/Config_"$WRT_CONFIG"_"$WRT_VER"_"$WRT_DATE".txt
+          cp -f ./.config ./upload/Config-"$WRT_CONFIG"-"$WRT_INFO"-"$WRT_BRANCH"-"$WRT_DATE".txt
 
           if [[ $WRT_TEST != 'true' ]]; then
-            KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)
+            echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \;)" >> $GITHUB_ENV
+            echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
 
-            find ./bin/targets/ -iregex ".*\(buildinfo\|json\|manifest\|sha256sums\|packages\)$" -exec rm -rf {} +
+            find ./bin/targets/ -iregex ".*\(buildinfo\|json\|sha256sums\|packages\)$" -exec rm -rf {} +
 
-            for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*.*") ; do
-                if [[ "$FILE" == *"initramfs"* ]]; then
-                  rm -f "$FILE"
-                  echo "delete $FILE"
-                else
-                  EXT=$(basename $FILE | cut -d '.' -f 2-)
-                  NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
-                  NEW_FILE="$WRT_VER"_"$WRT_CONFIG"_"$NAME"_"$WRT_DATE"."$EXT"
-                  mv -f $FILE ./upload/$NEW_FILE                
-                fi
+            for FILE in $(find ./bin/targets/ -type f -iname "*$WRT_TARGET*") ; do
+              EXT=$(basename $FILE | cut -d '.' -f 2-)
+              NAME=$(basename $FILE | cut -d '.' -f 1 | grep -io "\($WRT_TARGET\).*")
+              NEW_FILE="$WRT_INFO"-"$WRT_BRANCH"-"$NAME"-"$WRT_DATE"."$EXT"
+              mv -f $FILE ./upload/$NEW_FILE
             done
-            find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
-          fi
 
-          echo "WRT_KVER=${KVER:-none}" >> $GITHUB_ENV
+            find ./bin/targets/ -type f -exec mv -f {} ./upload/ \;
+
+            make clean -j$(nproc)
+          fi
 
       - name: Release Firmware
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: R${{env.WRT_DATE}}_${{env.WRT_VER}}_for_${{env.WRT_CONFIG}}
+          tag_name: ${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{env.WRT_BRANCH}}-${{env.WRT_DATE}}
           files: ./wrt/upload/*.*
           body: |
             **This is OpenWrt Firmware for ${{env.WRT_BRANCH}}**

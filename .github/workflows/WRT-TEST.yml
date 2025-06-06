@@ -1,24 +1,39 @@
 #CI项目
-name: QCA-6.12-LiBwrt
+name: WRT-TEST
 
 #CI计划
 on:
-  #自动编译：当Auto-Clean运行完成后
-  workflow_run:
-    workflows: ["Auto-Clean"]
-    types:
-      - completed
   #手动编译
   workflow_dispatch:
     inputs:
+      CONFIG:
+        default: 'MEDIATEK'
+        required: true
+        type: choice
+        options:
+          - IPQ60XX
+          - IPQ807X
+          - TEST
+      SOURCE:
+        default: 'VIKINGYFY/immortalwrt'
+        required: true
+        type: choice
+        options:
+          - VIKINGYFY/immortalwrt
+          - immortalwrt/immortalwrt
+          - LiBwrt/openwrt-6.x
+          - qosmio/openwrt-ipq
+      BRANCH:
+        default: 'main'
+        required: true
+        type: string
       PACKAGE:
-        description: '手动调整插件包，多个请用\n符号隔开。'
         required: false
         type: string
       TEST:
         description: '仅输出配置文件，不编译固件。'
-        default: 'false'
-        required: false
+        default: 'true'
+        required: true
         type: boolean
 
 #CI权限
@@ -27,26 +42,18 @@ permissions: write-all
 #CI任务
 jobs:
   config:
-    name: ${{matrix.CONFIG}}
-    strategy:
-      fail-fast: false
-      #max-parallel: 3
-      matrix:
-        CONFIG: [IPQ807X,IPQ60XX]
-        SOURCE: [LiBwrt/openwrt-6.x]
-        BRANCH: [kernel-6.12]
-
+    name: ${{inputs.CONFIG}}
     #调用公用编译核心WRT-CORE.yml
     uses: ./.github/workflows/WRT-CORE.yml
     with:
       #编译配置
-      WRT_CONFIG: ${{matrix.CONFIG}}
+      WRT_CONFIG: ${{inputs.CONFIG}}
       #默认主题
       WRT_THEME: argon
       #默认主机名
-      WRT_NAME: RuiWrt
+      WRT_NAME: RWRT
       #默认WIFI名称
-      WRT_SSID: RuiWrt
+      WRT_SSID: RWRT
       #默认WIFI密码
       WRT_WORD: 12345678
       #默认地址
@@ -54,11 +61,11 @@ jobs:
       #默认密码，仅作提示，修改无用
       WRT_PW: 无
       #源码链接
-      WRT_REPO: https://github.com/${{matrix.SOURCE}}.git
+      WRT_REPO: https://github.com/${{inputs.SOURCE}}.git
       #源码分支
-      WRT_BRANCH: ${{matrix.BRANCH}}
+      WRT_BRANCH: ${{inputs.BRANCH}}
       #源码名称
-      WRT_SOURCE: ${{matrix.SOURCE}}
+      WRT_SOURCE: ${{inputs.SOURCE}}
       #插件调整
       WRT_PACKAGE: ${{inputs.PACKAGE}}
       #仅输出配置文件

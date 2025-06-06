@@ -51,54 +51,6 @@ CONFIG_PACKAGE_kmod-xdp-sockets-diag=y
 EOF
 }
 
-function cat_usb_net() {
-  cat >> "$1" <<EOF
-#USB CPE Driver
-CONFIG_PACKAGE_kmod-usb-net=y
-#CONFIG_PACKAGE_kmod-usb-net-cdc-ether=y
-#CONFIG_PACKAGE_kmod-usb-net-cdc-mbim=y
-#CONFIG_PACKAGE_kmod-usb-net-cdc-ncm=y
-CONFIG_PACKAGE_kmod-usb-net-rndis=y
-CONFIG_PACKAGE_kmod-usb-net-rtl8150=y
-CONFIG_PACKAGE_kmod-usb-net-rtl8152=y
-#CONFIG_PACKAGE_luci-proto-mbim=y
-#CONFIG_PACKAGE_luci-proto-ncm=y
-#CONFIG_PACKAGE_luci-proto-modemmanager=y
-#CONFIG_PACKAGE_luci-app-qmodem=y
-#CONFIG_PACKAGE_luci-app-qmodem-sms=y
-#CONFIG_PACKAGE_luci-proto-qmi=y
-#CONFIG_PACKAGE_luci-app-qmodem=y
-#CONFIG_PACKAGE_luci-app-qmodem-sms=y
-#CONFIG_PACKAGE_kmod-usb-net-qmi-wwan=y
-EOF
-}
-
-function set_nss_driver() {
-  cat >> $1 <<EOF
-#NSS驱动相关
-CONFIG_NSS_FIRMWARE_VERSION_11_4=n
-CONFIG_NSS_FIRMWARE_VERSION_12_5=y
-CONFIG_PACKAGE_kmod-qca-nss-dp=y
-CONFIG_PACKAGE_kmod-qca-nss-drv=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-bridge-mgr=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-vlan=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-igs=y
-#CONFIG_PACKAGE_kmod-qca-nss-drv-map-t=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-pppoe=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-pptp=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-qdisc=y
-CONFIG_PACKAGE_kmod-qca-nss-macsec=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-l2tpv2=y
-CONFIG_PACKAGE_kmod-qca-nss-drv-lag-mgr=y
-CONFIG_PACKAGE_kmod-qca-nss-crypto=y
-EOF
-}
-
-function kernel_version() {
-  echo $(sed -n 's/^KERNEL_PATCHVER:=\(.*\)/\1/p' target/linux/qualcommax/Makefile)
-}
-
-
 function set_kernel_size() {
   #修改jdc ax1800 pro 的内核大小为12M
   image_file='./target/linux/qualcommax/image/ipq60xx.mk'
@@ -107,13 +59,7 @@ function set_kernel_size() {
   sed -i "/^define Device\/jdcloud_re-cs-07/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
   sed -i "/^define Device\/redmi_ax5-jdcloud/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
 }
-#开启内存回收补丁
-function enable_skb_recycler() {
-  cat >> $1 <<EOF
-CONFIG_KERNEL_SKB_RECYCLER=y
-CONFIG_KERNEL_SKB_RECYCLER_MULTI_CPU=y
-EOF
-}
+
 
 function generate_config() {
   config_file=".config"
@@ -121,15 +67,10 @@ function generate_config() {
   cat $GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt $GITHUB_WORKSPACE/Config/GENERAL.txt  > $config_file
   local target=$(echo $WRT_ARCH | cut -d'_' -f2)
 
-  #删除wifi依赖
-  set_nss_driver $config_file
-  cat_usb_net $config_file
   #增加ebpf
   cat_ebpf_config $config_file
-  enable_skb_recycler $config_file
   set_kernel_size
-  #增加内核选项
-  cat_kernel_config "target/linux/qualcommax/${target}/config-default"
+
 }
 
 
