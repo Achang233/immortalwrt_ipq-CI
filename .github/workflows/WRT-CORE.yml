@@ -183,6 +183,12 @@ jobs:
 
           make download -j$(nproc)
 
+      - name: Hot-fix kernel build error
+        if: env.WRT_TEST != 'true'
+        run: |
+            dev_file="$(find build_dir -type f -name dev.c | grep net/core | head -n1)"
+            [ -n "$dev_file" ] && sed -i '/CACHELINE_ASSERT_GROUP_SIZE.*net_device_read_tx, 160/d' "$dev_file"
+
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |
