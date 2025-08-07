@@ -1,11 +1,14 @@
 # OpenWRT-CI
 云编译OpenWRT固件
 
-官方版：
+immortalwrt源码仓库：
 https://github.com/immortalwrt/immortalwrt.git
 
-高通版：
+VIKINGYFY的QCA immortalwrt源码仓库:
 https://github.com/VIKINGYFY/immortalwrt.git
+
+LiBwrt源码仓库：
+https://github.com/LiBwrt/openwrt-6.x.git
 
 # 固件简要说明：
 
