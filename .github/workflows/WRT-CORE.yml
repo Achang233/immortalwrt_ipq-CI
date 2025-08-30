@@ -74,7 +74,7 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix libfuse-dev
+          sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
@@ -160,12 +160,12 @@ jobs:
 
       - name: Custom Settings
         run: |
-
+        
           . $GITHUB_WORKSPACE/Scripts/function.sh
           cd ./wrt/
         
-          generate_config && cat .config  
-
+          generate_config && cat .config
+          
           if [[ "${WRT_CONFIG,,}" == *"test"* ]]; then
             cat $GITHUB_WORKSPACE/Config/$WRT_CONFIG.txt >> .config
           else
@@ -183,15 +183,6 @@ jobs:
 
           make download -j$(nproc)
 
-      - name: Hot-fix kernel build error
-        if: env.WRT_TEST != 'true'
-        run: |
-            cd ./wrt
-            
-            make target/linux/{clean,prepare} -j$(nproc)   # 确保源码已解压
-            dev_file="$(find build_dir -type f -name dev.c | grep net/core | head -n1)"
-            [ -n "$dev_file" ] && sed -i '/CACHELINE_ASSERT_GROUP_SIZE.*net_device_read_tx, 160/d' "$dev_file"
-  
       - name: Compile Firmware
         if: env.WRT_TEST != 'true'
         run: |

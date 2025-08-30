@@ -1,5 +1,5 @@
 # OpenWRT-CI
-云编译OpenWRT固件
+云编译个人自用的OpenWRT固件
 
 immortalwrt源码仓库：
 https://github.com/immortalwrt/immortalwrt.git
