@@ -144,6 +144,12 @@ jobs:
             echo "caches cleanup done!"
           fi
 
+      - name: Prepare Feeds List
+        run: |
+          cd ./wrt/
+
+          $GITHUB_WORKSPACE/Scripts/feeds.sh
+
       - name: Update Feeds
         run: |
           cd ./wrt/
@@ -234,7 +240,7 @@ jobs:
           body: |
             **This is OpenWrt Firmware for ${{env.WRT_BRANCH}}**
             ### 📒 固件信息
-            - 这是带WIFI以及NSS的固件，默认主题为Argon；该固件添加了额外的软件包cpufreq、upnp、autoreboot、diskman、homeproxy、ua2f、daed，并添加了若干工具。
+            - 这是带WIFI以及NSS的固件
             - 💻 这是 ${{env.WRT_TARGET}} 平台使用的 OpenWrt 固件
             - ⚽ 固件源码: ${{env.WRT_REPO}}
             - 💝 源码分支: ${{env.WRT_BRANCH}}

@@ -48,14 +48,14 @@ UPDATE_PACKAGE() {
 UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
 UPDATE_PACKAGE "aurora" "eamonxg/luci-theme-aurora" "master"
 UPDATE_PACKAGE "aurora-config" "eamonxg/luci-app-aurora-config" "master"
-UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
+#UPDATE_PACKAGE "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
 UPDATE_PACKAGE "luci-app-tailscale" "asvow/luci-app-tailscale" "main"
 UPDATE_PACKAGE "gecoosac" "lwb1978/openwrt-gecoosac" "main"
 UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5"
 UPDATE_PACKAGE "v2ray-geodata" "sbwml/v2ray-geodata" "master"
 UPDATE_PACKAGE "luci-app-sms-tool-js" "4IceG/luci-app-sms-tool-js" "main"
 UPDATE_PACKAGE "luci-app-3ginfo-lite" "4IceG/luci-app-3ginfo-lite" "main"
-UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
+#UPDATE_PACKAGE "momo" "nikkinikki-org/OpenWrt-momo" "main"
 UPDATE_PACKAGE "athena-led" "NONGFAH/luci-app-athena-led" "main"
 
 #更新软件包版本
