@@ -45,7 +45,9 @@ ADD_FEED() {
   fi
 
   # Remove existing entry with the same name
-  sed -i "/^[[:space:]]*src-[^[:space:]]\+[[:space:]]\+${NAME}\b/d" "$FEEDS_CONF" || true
+  # Uses sed -E for extended regex support
+  # Matches start of line, optional whitespace, src-xxx, whitespace, NAME, word boundary
+  sed -E -i "/^[[:space:]]*src-[^[:space:]]+[[:space:]]+${NAME}\b/d" "$FEEDS_CONF" || true
 
   # Add new entry
   echo "Add feed: $ENTRY"
