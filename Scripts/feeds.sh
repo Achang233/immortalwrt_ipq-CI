@@ -62,6 +62,6 @@ ADD_FEED() {
 # ADD_FEED "custompkg" "https://github.com/username/custom-feeds.git" "main"
 # ADD_FEED "customsvn" "https://example.com/svn/feeds/custom" "" "svn"
 
-# ADD_FEED "qmodem" "FUjr/QModem" "main"
 ADD_FEED "momo" "nikkinikki-org/OpenWrt-momo" "main"
 ADD_FEED "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
+ADD_FEED "QModem" "Achang233/QModem" "main"
