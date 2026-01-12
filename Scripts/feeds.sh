@@ -64,4 +64,4 @@ ADD_FEED() {
 
 ADD_FEED "momo" "nikkinikki-org/OpenWrt-momo" "main"
 ADD_FEED "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
-ADD_FEED "QModem" "Achang233/QModem" "main"
+ADD_FEED "QModem" "FUjr/QModem" "main"
