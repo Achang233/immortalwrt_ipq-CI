@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2026 VIKINGYFY <https://github.com/VIKINGYFY>
+# Copyright (C) 2026 Achang233 <https://github.com/Achang233>
 
 #安装和更新软件包
 UPDATE_PACKAGE() {

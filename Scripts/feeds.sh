@@ -1,4 +1,6 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2026 Achang233 <https://github.com/Achang233>
 
 # Feeds.sh
 # Set up feeds directly in the shell script

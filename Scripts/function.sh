@@ -1,4 +1,7 @@
 #!/bin/bash
+# SPDX-License-Identifier: MIT
+# Copyright (C) 2026 VIKINGYFY <https://github.com/VIKINGYFY>
+# Copyright (C) 2026 Achang233 <https://github.com/Achang233>
 
 function cat_kernel_config() {
   if [ -f $1 ]; then
@@ -57,7 +60,6 @@ function set_kernel_size() {
   sed -i "/^define Device\/jdcloud_re-ss-01/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
   sed -i "/^define Device\/jdcloud_re-cs-02/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
   sed -i "/^define Device\/jdcloud_re-cs-07/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
-  sed -i "/^define Device\/redmi_ax5-jdcloud/,/^endef/ { /KERNEL_SIZE := 6144k/s//KERNEL_SIZE := 12288k/ }" $image_file
 }
 
 
@@ -71,9 +73,3 @@ function generate_config() {
   set_kernel_size
 
 }
-
-
-
-
-
-
