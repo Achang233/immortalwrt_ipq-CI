@@ -82,7 +82,7 @@ jobs:
           sudo -E apt -yqq autoremove --purge
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
-          sudo -E apt -yqq install dos2unix python3-netifaces libfuse-dev
+          sudo -E apt -yqq install dos2unix python3-netifaces python3-venv libfuse-dev
           sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
@@ -166,6 +166,24 @@ jobs:
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
+      - name: Install Athena Rust Toolchain
+        if: ${{ !inputs.WRT_TEST && inputs.WRT_CONFIG == 'IPQ60XX' }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-unknown-linux-musl
+
+      - name: Build Athena From Source
+        if: ${{ !inputs.WRT_TEST && inputs.WRT_CONFIG == 'IPQ60XX' }}
+        run: |
+          python3 -m venv "$RUNNER_TEMP/athena-tools"
+          "$RUNNER_TEMP/athena-tools/bin/pip" install cargo-zigbuild==0.23.4 ziglang==0.16.0
+          export PATH="$RUNNER_TEMP/athena-tools/bin:$PATH"
+          export CARGO_ZIGBUILD_PYTHON_PATH="$RUNNER_TEMP/athena-tools/bin/python"
+          python3 "$GITHUB_WORKSPACE/Scripts/athena.py" \
+            "$GITHUB_WORKSPACE/wrt/package/JDC-AX6600-Athena-LED-Controller" \
+            "$GITHUB_WORKSPACE/wrt" "$RUNNER_TEMP/athena-target" \
+            2>&1 | tee "$GITHUB_WORKSPACE/wrt/athena-build.log"
+
       - name: Download Packages
         if: ${{ !inputs.WRT_TEST }}
         run: |
@@ -210,6 +228,7 @@ jobs:
           cp -f ./.config ./upload/Config-"$WRT_CONFIG"-"$WRT_INFO"-"$WRT_BRANCH"-"$WRT_DATE".txt
 
           if [[ "$WRT_TEST" != 'true' ]]; then
+            [ ! -f ./athena-build.json ] || cp ./athena-build.json ./upload/
             echo "WRT_KVER=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^kernel - \K[\d\.]+' {} \; | sort -u | paste -sd ',')" >> $GITHUB_ENV
             echo "WRT_LIST=$(find ./bin/targets/ -type f -name "*.manifest" -exec grep -oP '^luci-(app|theme)[^ ]*' {} \; | tr '\n' ' ')" >> $GITHUB_ENV
 
@@ -267,4 +286,6 @@ jobs:
             ./wrt/feeds.conf.default
             ./wrt/download.log
             ./wrt/build.log
+            ./wrt/athena-build.log
+            ./wrt/athena-build.json
             ./wrt/logs/

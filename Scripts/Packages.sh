@@ -59,13 +59,10 @@ UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5"
 UPDATE_PACKAGE "v2ray-geodata" "sbwml/v2ray-geodata" "master"
 #UPDATE_PACKAGE "luci-app-sms-tool-js" "4IceG/luci-app-sms-tool-js" "main"
 #UPDATE_PACKAGE "luci-app-3ginfo-lite" "4IceG/luci-app-3ginfo-lite" "main"
-# RE-CS-02 即 AX6600：核心和 LuCI 使用同一正式发布版本，main 引用的 v2.5.0 尚无发布资产。
-UPDATE_PACKAGE "athena-led" "unraveloop/JDC-AX6600-Athena-LED-Controller" "v2.4.0"
-ATHENA_MAKEFILE="./JDC-AX6600-Athena-LED-Controller/athena-led/Makefile"
-grep -qx 'PKG_VERSION:=2.4.0' "$ATHENA_MAKEFILE"
-grep -qx 'PKG_VERSION:=2.4.0' ./JDC-AX6600-Athena-LED-Controller/luci-app-athena-led/Makefile
-grep -qx 'PKG_HASH:=skip' "$ATHENA_MAKEFILE"
-sed -i 's/^PKG_HASH:=skip$/PKG_HASH:=243560a5e6bb52e5a493f7efa528771a6ab26e325a69b6e1d9d89647eaac5f3f/' "$ATHENA_MAKEFILE"
+# RE-CS-02 即 AX6600：核心和 LuCI 取自同一次 main checkout，核心由 CI 交叉编译。
+if [ "$WRT_CONFIG" = "IPQ60XX" ]; then
+	UPDATE_PACKAGE "athena-led" "unraveloop/JDC-AX6600-Athena-LED-Controller" "main"
+fi
 UPDATE_PACKAGE "UA3F" "SunBK201/UA3F" "master"
 
 # 使用 feeds 维护的版本、补丁与哈希，不单独改写版本号。
