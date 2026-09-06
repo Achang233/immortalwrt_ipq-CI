@@ -3,6 +3,8 @@
 # Copyright (C) 2026 VIKINGYFY <https://github.com/VIKINGYFY>
 # Copyright (C) 2026 Achang233 <https://github.com/Achang233>
 
+set -eo pipefail
+
 #安装和更新软件包
 UPDATE_PACKAGE() {
 	local PKG_NAME=$1
@@ -57,7 +59,13 @@ UPDATE_PACKAGE "mosdns" "sbwml/luci-app-mosdns" "v5"
 UPDATE_PACKAGE "v2ray-geodata" "sbwml/v2ray-geodata" "master"
 #UPDATE_PACKAGE "luci-app-sms-tool-js" "4IceG/luci-app-sms-tool-js" "main"
 #UPDATE_PACKAGE "luci-app-3ginfo-lite" "4IceG/luci-app-3ginfo-lite" "main"
-UPDATE_PACKAGE "luci-app-athena-led" "unraveloop/JDC-AX6600-Athena-LED-Controller" "main"
+# RE-CS-02 即 AX6600：核心和 LuCI 使用同一正式发布版本，main 引用的 v2.5.0 尚无发布资产。
+UPDATE_PACKAGE "athena-led" "unraveloop/JDC-AX6600-Athena-LED-Controller" "v2.4.0"
+ATHENA_MAKEFILE="./JDC-AX6600-Athena-LED-Controller/athena-led/Makefile"
+grep -qx 'PKG_VERSION:=2.4.0' "$ATHENA_MAKEFILE"
+grep -qx 'PKG_VERSION:=2.4.0' ./JDC-AX6600-Athena-LED-Controller/luci-app-athena-led/Makefile
+grep -qx 'PKG_HASH:=skip' "$ATHENA_MAKEFILE"
+sed -i 's/^PKG_HASH:=skip$/PKG_HASH:=243560a5e6bb52e5a493f7efa528771a6ab26e325a69b6e1d9d89647eaac5f3f/' "$ATHENA_MAKEFILE"
 UPDATE_PACKAGE "UA3F" "SunBK201/UA3F" "master"
 
 #更新软件包版本
