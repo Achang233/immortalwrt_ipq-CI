@@ -64,12 +64,10 @@ function set_kernel_size() {
 
 
 function generate_config() {
-  config_file=".config"
-  #如配置文件已存在
-  cat $GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt $GITHUB_WORKSPACE/Config/GENERAL.txt  > $config_file
-  local target=$(echo $WRT_ARCH | cut -d'_' -f2)
+  local config_file=".config"
+  cat "$GITHUB_WORKSPACE/Config/${WRT_CONFIG}.txt" "$GITHUB_WORKSPACE/Config/GENERAL.txt" > "$config_file"
   #增加ebpf
-  cat_ebpf_config $config_file
+  cat_ebpf_config "$config_file"
   set_kernel_size
 
 }
