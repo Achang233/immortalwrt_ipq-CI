@@ -160,6 +160,8 @@ jobs:
 
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+          # Nikki 使用稳定版内核，避免两个互斥 provider 生成 Kconfig 循环依赖。
+          ./scripts/feeds uninstall mihomo-alpha
 
       - name: Custom Packages
         run: |
