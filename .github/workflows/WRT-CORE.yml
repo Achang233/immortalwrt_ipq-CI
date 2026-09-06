@@ -65,6 +65,9 @@ jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Checkout Projects
         uses: actions/checkout@main
@@ -168,14 +171,17 @@ jobs:
         run: |
           cd ./wrt/
 
-          make download -j$(nproc)
+          # 上游 download 在同一 shell 串行调用多个子目标，前面的失败可能被后面的成功覆盖。
+          for dir in tools toolchain package target; do
+            make download -j$(nproc) V=s DOWNLOAD_DIRS="$dir/download" 2>&1 | tee -a download.log
+          done
 
       - name: Compile Firmware
         if: ${{ !inputs.WRT_TEST }}
         run: |
           cd ./wrt/
 
-          make -j$(nproc) || make -j$(nproc) V=s
+          make -j$(nproc) V=s 2>&1 | tee build.log
 
       - name: Save Build Cache
         if: ${{ !inputs.WRT_TEST && success() && steps.cache-restore.outputs.cache-hit != 'true' }}
@@ -185,6 +191,7 @@ jobs:
           path: ./wrt/.ccache
 
       - name: Machine Information
+        if: ${{ always() }}
         run: |
           cd ./wrt/
 
@@ -247,3 +254,17 @@ jobs:
             ### 🧊 固件版本
             - 固件内核版本：**${{env.WRT_KVER}}**
             - 固件编译前最后一次➦[主源码]提交：${{env.WRT_HASH}}
+
+      - name: Upload Build Diagnostics
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: diagnostics-${{env.WRT_CONFIG}}-${{env.WRT_INFO}}-${{github.run_id}}-${{github.run_attempt}}
+          include-hidden-files: true
+          retention-days: 30
+          path: |
+            ./wrt/.config
+            ./wrt/feeds.conf.default
+            ./wrt/download.log
+            ./wrt/build.log
+            ./wrt/logs/
