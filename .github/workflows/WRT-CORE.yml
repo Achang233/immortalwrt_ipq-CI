@@ -151,6 +151,11 @@ jobs:
           cd ./wrt/package/
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
+          if [[ "$WRT_CONFIG" == 'IPQ60XX' ]]; then
+            python3 "$GITHUB_WORKSPACE/Scripts/athena.py" prepare \
+              "$GITHUB_WORKSPACE/wrt/package/JDC-AX6600-Athena-LED-Controller" \
+              "$GITHUB_WORKSPACE/wrt"
+          fi
           $GITHUB_WORKSPACE/Scripts/Handles.sh
 
       - name: Custom Settings
@@ -179,7 +184,7 @@ jobs:
           "$RUNNER_TEMP/athena-tools/bin/pip" install cargo-zigbuild==0.23.4 ziglang==0.16.0
           export PATH="$RUNNER_TEMP/athena-tools/bin:$PATH"
           export CARGO_ZIGBUILD_PYTHON_PATH="$RUNNER_TEMP/athena-tools/bin/python"
-          python3 "$GITHUB_WORKSPACE/Scripts/athena.py" \
+          python3 "$GITHUB_WORKSPACE/Scripts/athena.py" build \
             "$GITHUB_WORKSPACE/wrt/package/JDC-AX6600-Athena-LED-Controller" \
             "$GITHUB_WORKSPACE/wrt" "$RUNNER_TEMP/athena-target" \
             2>&1 | tee "$GITHUB_WORKSPACE/wrt/athena-build.log"

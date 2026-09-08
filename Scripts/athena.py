@@ -15,6 +15,12 @@ import tarfile
 import tomllib
 
 
+DEVICE_NAME = "jdcloud_re-cs-02"
+APP_PACKAGE = "luci-app-athena-led"
+TRANSLATION_PACKAGE = "luci-i18n-athena-led-zh-cn"
+EMBEDDED_TRANSLATION = "athena_led.zh-cn.lmo"
+
+
 def make_value(text, key):
     values = re.findall(rf"^{re.escape(key)}:=(.+)$", text, re.MULTILINE)
     if len(values) != 1:
@@ -31,15 +37,47 @@ def output(*args, cwd=None):
     return subprocess.check_output(args, cwd=cwd, text=True).strip()
 
 
+def ui_recipe(source):
+    return (source.resolve() / "luci-app-athena-led/Makefile").read_text(encoding="utf-8")
+
+
+def adapt_device_packages(wrt, ui_recipe):
+    """Install Athena only for AX6600 and match the LuCI translation layout."""
+    image = wrt / "target/linux/qualcommax/image/ipq60xx.mk"
+    text = image.read_text(encoding="utf-8")
+    pattern = rf"(?ms)^define Device/{re.escape(DEVICE_NAME)}\n.*?^endef$"
+    blocks = list(re.finditer(pattern, text))
+    if len(blocks) != 1:
+        raise ValueError(f"Expected one Device/{DEVICE_NAME} definition, found {len(blocks)}")
+    block = blocks[0].group()
+    app_count = len(re.findall(rf"(?<!\S){re.escape(APP_PACKAGE)}(?=\s|$)", block))
+    if app_count > 1:
+        raise ValueError(f"Expected at most one {APP_PACKAGE}, found {app_count}")
+    changed = False
+    if app_count == 0:
+        block = block.removesuffix("endef") + f"  DEVICE_PACKAGES += {APP_PACKAGE}\nendef"
+        changed = True
+    translation_count = len(re.findall(rf"(?<!\S){re.escape(TRANSLATION_PACKAGE)}(?=\s|$)", block))
+    if translation_count > 1:
+        raise ValueError(f"Expected at most one {TRANSLATION_PACKAGE}, found {translation_count}")
+    if translation_count and EMBEDDED_TRANSLATION in ui_recipe:
+        block = re.sub(rf"(?<!\S){re.escape(TRANSLATION_PACKAGE)}(?=\s|$)", "", block)
+        changed = True
+    if not changed:
+        return False
+    image.write_text(text[:blocks[0].start()] + block + text[blocks[0].end():], encoding="utf-8", newline="\n")
+    return True
+
+
 def build(source, wrt, target_dir):
     source, wrt, target_dir = source.resolve(), wrt.resolve(), target_dir.resolve()
     core = source / "athena-led"
     makefile = core / "Makefile"
     recipe = makefile.read_text(encoding="utf-8")
-    ui_recipe = (source / "luci-app-athena-led/Makefile").read_text(encoding="utf-8")
+    ui = ui_recipe(source)
     cargo = tomllib.loads((core / "Cargo.toml").read_text(encoding="utf-8"))
     version = cargo["package"]["version"]
-    if make_value(recipe, "PKG_VERSION") != version or make_value(ui_recipe, "PKG_VERSION") != version:
+    if make_value(recipe, "PKG_VERSION") != version or make_value(ui, "PKG_VERSION") != version:
         raise ValueError("Athena Cargo, core package and LuCI versions must match")
     lock_hash = hashlib.sha256((core / "Cargo.lock").read_bytes()).hexdigest()
     revision = output("git", "rev-parse", "HEAD", cwd=source)
@@ -48,6 +86,7 @@ def build(source, wrt, target_dir):
     # Check the packaging contract before spending time on Rust compilation.
     for key in ("PKG_SOURCE", "PKG_SOURCE_URL", "PKG_HASH"):
         make_value(recipe, key)
+    adapt_device_packages(wrt, ui)
     target = "aarch64-unknown-linux-musl"
     print(f"Building Athena {version} from {revision} for {target}", flush=True)
     subprocess.run(
@@ -85,8 +124,16 @@ def build(source, wrt, target_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", type=Path)
-    parser.add_argument("wrt", type=Path)
-    parser.add_argument("target_dir", type=Path)
+    commands = parser.add_subparsers(dest="command", required=True)
+    prepare_parser = commands.add_parser("prepare")
+    prepare_parser.add_argument("source", type=Path)
+    prepare_parser.add_argument("wrt", type=Path)
+    build_parser = commands.add_parser("build")
+    build_parser.add_argument("source", type=Path)
+    build_parser.add_argument("wrt", type=Path)
+    build_parser.add_argument("target_dir", type=Path)
     args = parser.parse_args()
-    build(args.source, args.wrt, args.target_dir)
+    if args.command == "prepare":
+        adapt_device_packages(args.wrt.resolve(), ui_recipe(args.source))
+    else:
+        build(args.source, args.wrt, args.target_dir)
