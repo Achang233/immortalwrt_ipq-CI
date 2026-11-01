@@ -3,7 +3,11 @@
 # Copyright (C) 2026 VIKINGYFY <https://github.com/VIKINGYFY>
 # Copyright (C) 2026 Achang233 <https://github.com/Achang233>
 
+set -eo pipefail
+
 PKG_PATH="$GITHUB_WORKSPACE/wrt/package/"
+
+cd "$PKG_PATH"
 
 #预置HomeProxy数据
 if [ -d *"homeproxy"* ]; then

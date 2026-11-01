@@ -4,6 +4,7 @@
 # Copyright (C) 2026 Achang233 <https://github.com/Achang233>
 
 set -eo pipefail
+cd "$GITHUB_WORKSPACE/wrt"
 
 #安装和更新软件包
 UPDATE_PACKAGE() {
@@ -13,6 +14,7 @@ UPDATE_PACKAGE() {
 	local PKG_SPECIAL=$4
 	local PKG_LIST=("$PKG_NAME" $5)  # 第5个参数为自定义名称列表
 	local REPO_NAME=${PKG_REPO#*/}
+	local REPO_PATH="./package/$REPO_NAME"
 
 	echo " "
 
@@ -20,7 +22,8 @@ UPDATE_PACKAGE() {
 	for NAME in "${PKG_LIST[@]}"; do
 		# 查找匹配的目录
 		echo "Search directory: $NAME"
-		local FOUND_DIRS=$(find ../feeds/luci/ ../feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
+		local FOUND_DIRS
+		FOUND_DIRS=$(find ./feeds/luci/ ./feeds/packages/ -maxdepth 3 -type d -iname "*$NAME*" 2>/dev/null)
 
 		# 删除找到的目录
 		if [ -n "$FOUND_DIRS" ]; then
@@ -34,14 +37,14 @@ UPDATE_PACKAGE() {
 	done
 
 	# 克隆 GitHub 仓库
-	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git"
+	git clone --depth=1 --single-branch --branch $PKG_BRANCH "https://github.com/$PKG_REPO.git" "$REPO_PATH"
 
 	# 处理克隆的仓库
 	if [[ "$PKG_SPECIAL" == "pkg" ]]; then
-		find ./$REPO_NAME/*/ -maxdepth 3 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./ \;
-		rm -rf ./$REPO_NAME/
+		find "$REPO_PATH"/ -mindepth 1 -maxdepth 4 -type d -iname "*$PKG_NAME*" -prune -exec cp -rf {} ./package/ \;
+		rm -rf "$REPO_PATH"
 	elif [[ "$PKG_SPECIAL" == "name" ]]; then
-		mv -f $REPO_NAME $PKG_NAME
+		mv -f "$REPO_PATH" "./package/$PKG_NAME"
 	fi
 }
 
@@ -50,6 +53,7 @@ UPDATE_PACKAGE() {
 # UPDATE_PACKAGE "open-app-filter" "destan19/OpenAppFilter" "master" "" "luci-app-appfilter oaf" 这样会把原有的open-app-filter，luci-app-appfilter，oaf相关组件删除，不会出现coremark错误。
 
 # UPDATE_PACKAGE "包名" "项目地址" "项目分支" "pkg/name，可选，pkg为从大杂烩中单独提取包名插件；name为重命名为包名"
+UPDATE_PACKAGE "vantage" "anothaDev/luci-theme-vantage" "main"
 UPDATE_PACKAGE "argon" "sbwml/luci-theme-argon" "openwrt-25.12"
 UPDATE_PACKAGE "aurora" "eamonxg/luci-theme-aurora" "master"
 UPDATE_PACKAGE "aurora-config" "eamonxg/luci-app-aurora-config" "master"
