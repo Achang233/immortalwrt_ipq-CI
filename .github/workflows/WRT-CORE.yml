@@ -150,7 +150,7 @@ jobs:
 
       - name: Custom Packages
         run: |
-          cd ./wrt/package/
+          cd ./wrt/
 
           $GITHUB_WORKSPACE/Scripts/Packages.sh
           if [[ "$WRT_CONFIG" == 'IPQ60XX' ]]; then
@@ -170,6 +170,7 @@ jobs:
           cat .config
 
           $GITHUB_WORKSPACE/Scripts/Settings.sh
+          bash "$GITHUB_WORKSPACE/Scripts/prepare-build-host.sh"
 
           make defconfig -j$(nproc) && make clean -j$(nproc)
 
@@ -206,7 +207,22 @@ jobs:
         run: |
           cd ./wrt/
 
-          make -j$(nproc) V=s 2>&1 | tee build.log
+          mkdir -p "$GITHUB_WORKSPACE/build-reports"
+          /usr/bin/time -v -o "$GITHUB_WORKSPACE/build-reports/compile-time.txt" \
+            make -j$(nproc) V=s BUILD_TIME_LOG="$GITHUB_WORKSPACE/build-reports/parallel.tsv" 2>&1 | tee build.log
+
+      - name: Collect Build Reports
+        if: ${{ always() }}
+        run: bash "$GITHUB_WORKSPACE/Scripts/collect-build-reports.sh"
+
+      - name: Upload Build Reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-reports-${{inputs.WRT_CONFIG}}-${{github.run_id}}-${{github.run_attempt}}
+          path: ./build-reports/
+          retention-days: 7
+          if-no-files-found: error
 
       - name: Save Build Cache
         if: ${{ !inputs.WRT_TEST && success() && steps.cache-restore.outputs.cache-hit != 'true' }}
