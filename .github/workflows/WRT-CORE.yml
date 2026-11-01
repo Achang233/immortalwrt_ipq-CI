@@ -64,7 +64,8 @@ env:
 jobs:
   core:
     name: ${{inputs.WRT_SOURCE}}
-    runs-on: ubuntu-latest
+    # 初始化脚本支持 Ubuntu 24.04，固定版本以避免 latest 自动迁移。
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
@@ -83,7 +84,8 @@ jobs:
           sudo -E apt -yqq autoclean
           sudo -E apt -yqq clean
           sudo -E apt -yqq install dos2unix python3-netifaces python3-venv libfuse-dev
-          sudo bash -c 'bash <(curl -sL https://build-scripts.immortalwrt.org/init_build_environment.sh)'
+          curl -fLsS https://build-scripts.immortalwrt.org/init_build_environment.sh -o "$RUNNER_TEMP/init_build_environment.sh"
+          sudo bash "$RUNNER_TEMP/init_build_environment.sh"
           sudo -E systemctl daemon-reload
           sudo -E timedatectl set-timezone "Asia/Shanghai"
 
@@ -216,8 +218,6 @@ jobs:
       - name: Machine Information
         if: ${{ always() }}
         run: |
-          cd ./wrt/
-
           echo "======================="
           lscpu | grep -E "name|Core|Thread"
           echo "======================="
