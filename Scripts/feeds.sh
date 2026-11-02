@@ -66,3 +66,24 @@ ADD_FEED() {
 
 ADD_FEED "momo" "nikkinikki-org/OpenWrt-momo" "main"
 ADD_FEED "nikki" "nikkinikki-org/OpenWrt-nikki" "main"
+
+# main predates the libffi move from the packages feed to the core tree.
+# Backport the complete core package from a fixed upstream revision.
+if [ "$WRT_SOURCE" = "VIKINGYFY/immortalwrt" ] && [ "$WRT_BRANCH" = "main" ]; then
+  set -euo pipefail
+  test ! -e package/libs/libffi
+  LIBFFI_REV=17d1ac0c34b3f7eefb407277d25f4b78591f44c8
+  LIBFFI_TMP=$(mktemp -d)
+  trap 'rm -rf "$LIBFFI_TMP"' EXIT
+  git init -q "$LIBFFI_TMP"
+  git -C "$LIBFFI_TMP" remote add origin https://github.com/VIKINGYFY/immortalwrt.git
+  git -C "$LIBFFI_TMP" sparse-checkout set package/libs/libffi
+  git -C "$LIBFFI_TMP" fetch --depth=1 --filter=blob:none origin "$LIBFFI_REV"
+  git -C "$LIBFFI_TMP" checkout --detach FETCH_HEAD
+  test "$(git -C "$LIBFFI_TMP" rev-parse HEAD)" = "$LIBFFI_REV"
+  grep -Fq '$(eval $(call HostBuild))' "$LIBFFI_TMP/package/libs/libffi/Makefile"
+  grep -Fq '$(eval $(call BuildPackage,libffi))' "$LIBFFI_TMP/package/libs/libffi/Makefile"
+  mkdir -p package/libs
+  cp -a "$LIBFFI_TMP/package/libs/libffi" package/libs/
+  echo "Backported libffi from $LIBFFI_REV"
+fi
